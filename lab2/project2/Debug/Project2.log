@@ -1,0 +1,15 @@
+﻿Build started 3/29/2013 6:26:54 PM.
+Project "C:\Users\snw\Desktop\COMP 445\project2\Project2.vcxproj" on node 2 (Build target(s)).
+ClCompile:
+  C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt ser_tcp.cpp
+  ser_tcp.cpp
+c:\users\snw\desktop\comp 445\project2\ser_tcp.cpp(140): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+          c:\program files (x86)\microsoft visual studio 11.0\vc\include\stdio.h(218) : see declaration of 'fopen'
+Link:
+  C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\snw\Desktop\COMP 445\Debug\Server.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\snw\Desktop\COMP 445\Debug\Server.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\snw\Desktop\COMP 445\Debug\Server.lib" /MACHINE:X86 Debug\ser_tcp.obj
+  Project2.vcxproj -> C:\Users\snw\Desktop\COMP 445\Debug\Server.exe
+Done Building Project "C:\Users\snw\Desktop\COMP 445\project2\Project2.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:01.71

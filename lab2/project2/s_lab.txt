@@ -1,0 +1,439 @@
+
+
+
+SOEN 422/4 Winter 2012-13
+
+       	
+
+
+
+
+
+
+LAB REPORT #2
+
+
+
+
+
+
+
+
+SOEN 422
+CS & SE Dept. Winter 2012-13
+
+
+
+
+
+
+Team members:
+Santiago Finoli (9157999)
+Rodrigo Coniglione (5980631)
+Cherlyn Quan (9769536)
+
+
+
+
+
+February 20, 2013
+
+ 
+
+TABLE OF CONTENTS
+
+Introduction	3
+1. Problem Statement	3
+2. Abbreviations and Acronyms	3
+Resources	4
+1. Hardware Resources	4
+2. Hardware Setup	4
+3. Software Resources	5
+4. Software Setup	5
+Program	7
+1. Q3	7
+2. Q4	8
+3. Q5	11
+4. References Code Common to Bare Metal Programming	15
+4.1 usb_serial.c	15
+4.2 avr/interrupt.h	15
+4.3 stdio.h	15
+4.4 stdlib.h	15
+4.5 math.h	15
+Discussion/Conclusion	16
+
+
+
+
+ 
+
+Introduction
+In this laboratory, we learn how to program a remote control car where it can go forward, backward or stop using the Teensy++.
+1. Problem Statement
+Laboratory Experiment 2 is to understand how much more can the Teensy++ do. In this experiment, we are using the Teensy++ to control a remote control car whose 4 wheels can turn forward, backward or stop and whose speed can be selected by the user.
+2. Abbreviations and Acronyms
+OCR0x: Output Compare Register (x can be “A” or “B”) with timer 0
+OCR2x: Output Compare Register (x can be “A” or “B”) with timer 2
+PWM: Pulse-width modulation
+TCCR0A: Timer/Counter Control Register A with timer 0
+TCCR0B: Timer/Counter Control Register B with timer 0
+TCCR2A: Timer/Counter Control Register A with timer 2
+TCCR2B: Timer/Counter Control Register B with timer 2
+TIFR2: Timer/Counter Interrupt Flag Register with timer 2
+TIMSK2: Timer/Counter Interrupt Mask Register with timer 2
+ 
+
+
+Resources
+The resources are the materials needed to make the Teensy++ do what we want it to do.
+1. Hardware Resources
+Teensy++: A USB-based micro-controller development system.
+
+Breadboard: A construction base to prototype the experiments with design circuits.
+
+Micro-B USB cable: A cable to connect the Teensy++ to the computer to give the Teensy++ power.
+
+Computer: Used to give power to the Teensy++ and the breadboard. To program the code for the Teensy++ and then load the code to the Teensy++.
+
+H bridges: “An electronic circuit which enables a voltage to be applied across a load  in either direction.”
+
+Base of a Remote Control Car: A metal plate which has 4 wheels connected to it. Each wheel has 2 wires available to connect to the breadboard to give it power to turn.
+
+External Power Source: Power source to be given to power the remote control car. Taking power from the computer will be very heavy for the computer. Thus, to power the car, it is better to use an external power source instead.
+2. Hardware Setup
+To Setup the Standard Breadboard:
+1	Insert the Teensy++ to the standard breadboard.
+2	Insert the 2 H bridges to the standard breadboard.
+3	Connect the Ground pin of the Teensy++ to the Ground pin of the standard breadboard.
+4	Connect the +5V pin of the Teensy++ to the +5V pin of the standard breadboard.
+5	Connect the wires on the 2 H bridges according to the following illustration:
+	 
+	Note: Connecting the wires of the wheels to the H bridges will be done while setting up the remote control car.
+6	Plug the Teensy++ to the computer using the micro-B USB cable.
+
+To Setup the Remote Control Car:
+1	Insert the 4 wheels to the metal plate. One wheel in each corner of the metal plate.
+2	Put the setup standard breadboard on top of the remote control car.
+3	Insert the wires from the wheels to the H bridges according to the illustration earlier.
+4	Insert a wire from one side of the ground pin to the other side of the ground pin.
+5	Insert a wire from one side of the ground pin to connect it to the external power. source.
+6	Insert a wire from one side of the +5V pin to the external power source.
+3. Software Resources
+Teensy Loader application: An application to load the code to the Teensy++.
+
+Arduino program: A program to code using the Arduino functions.
+
+Noteleaf: A program to write notes. In our case, it is to code using the language C.
+
+Terminal: A hardware device which we will use to convert our code from a C source file to an object file (.elf file) and from an object file (.elf file) to a HEX file to load it to the Teensy++.
+
+4. Software Setup
+1	Install the Teensy Loader application to the computer.
+2	Open Noteleaf to write the bare metal program.
+3	Once the program is complete, save the program as a C file (extension: .c).
+4	Open the Terminal to convert the C file to an object file (extension: .elf).
+5	Check to see the Terminal’s response. If there is an error, the object file will not be created.
+6	From the Terminal, convert the object file to a HEX file (extension: .hex). There should not be any error unless if the code given to the terminal to convert the file is incorrect or not given in the correct order.
+7	Open the Teensy Loader application.
+8	Open the HEX file from the Teensy Loader application.
+9	Click on “AUTO”. It should turn bright green.
+10	Press on the button of the Teensy++ to load the new program to the Teensy++.
+11	Optional: Open Arduino program.
+12	Optional: Open the monitor from the Arduino program. Make sure it is the USB monitor.
+ 
+
+Program
+The program we have written to make the wheels turn in a “forward” direction, “backward” direction and stop. The speed can also be changed according to the user.
+1. Q3
+Write a program to set up one PWM to run a motor in a “forward” direction, and the second PWM to run the other motor one in a “backward direction.
+
+// Defines the frequency of the main clock of the AVR for use in the "delay.h" functions
+#define F_CPU 16000000
+// Main include required for ALL AVR-based projects
+// It contains the proper definitions (#DEFINE) for all the registers of all the AVR chips
+#include <avr/io.h>
+// Utility functions for delay.
+#include <util/delay.h>
+#include <stdio.h>
+ 
+// DC motor to be run with 8 bit PWM
+int main(void)
+{
+        	DDRB = (1 << 7); // enable pin 6  
+        	DDRD = (1 << 0);
+ 
+        	// Setup timer0 for comparsprinte-mode, fast pwm on OC0A with a pre-scaling of 1/64. (OC0B is disconnected)
+        	TCCR0A = 0b11110001;
+        	TCCR0B = 0b00000001;
+ 
+        	// Set top for timer0, OC0A (duty cycle = 50%)
+        	OCR0A = 255; // lower value => lower speed, higher value => higher speed
+        	OCR0B = 0;
+}
+
+
+ 
+
+2. Q4
+Modify your program so that you can control the speed and direction of the motors by commands from the console.
+
+// Defines the frequency of the main clock of the AVR for use in the "delay.h" functions
+#define F_CPU 16000000
+// Main include required for ALL AVR-based projects
+// It contains the proper definitions (#DEFINE) for all the registers of all the AVR chips
+#include <avr/io.h>
+// Utility functions for delay.
+#include <util/delay.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "usb_serial.h"
+#include <math.h>
+ 
+void print(int n)
+{
+char buffer[25];
+int length;
+length = sprintf(buffer,"%d ",n);
+int q;
+for(q=0;q<length;++q){
+usb_serial_putchar(buffer[q]);
+}
+}
+ 
+void serial_read(char* buffer)
+{
+int i=0;
+while(usb_serial_available())
+{
+buffer[i++]=usb_serial_getchar();
+}
+buffer[i]='\0';
+}
+ 
+// DC motor to be run with 8 bit PWM
+int main(void)
+{
+usb_init();
+DDRB = (1 << 7); // enable pin 6
+DDRD = (1 << 0);
+ 
+// Setup timer0 for comparsprinte-mode, fast pwm on OC0A with a pre-scaling of 1/64. (OC0B is disconnected)
+TCCR0A = 0b11110001;
+TCCR0B = 0b00000001;
+ 
+// Set top for timer0, OC0A (duty cycle = 0%)
+OCR0A = 0; // lower value => lower speed, higher value => higher speed
+     	OCR0B = 0;
+ 
+// direction control	
+     	int directionSelection = 0; // off
+        	
+     	while(1)
+     	{
+if(usb_serial_available())
+          	{
+          		char buffer[5];
+               	serial_read(buffer);
+                               	
+                	directionSelection = strtol(buffer, NULL, 0);
+                	print(directionSelection);	
+                                	
+               	if (directionSelection > 0) // forward
+                	{
+               		OCR0A =  0;
+                     	OCR0B = 120 + directionSelection;
+                	}
+                	else if (directionSelection < 0) // backward
+                	{
+               		 OCR0A = 120 + abs(directionSelection);
+                       OCR0B =  0;
+                	}
+               	else if (directionSelection == 0) //stops
+                	{
+OCR0A = 0;
+OCR0B = 0;
+               	}
+ 		}
+}
+}
+
+ 
+
+3. Q5
+Modify your program to receive the PWM equivalent analog values, and the motor directions on the console at one second intervals using a timer.
+
+Note: Your code should be written in “bare metal” style and should directly set up the timers and the output compare registers to produce phase correct PWM.
+
+// Defines the frequency of the main clock of the AVR for use in the "delay.h" functions
+#define F_CPU 16000000
+// Main include required for ALL AVR-based projects
+// It contains the proper definitions (#DEFINE) for all the registers of all the AVR chips
+#include <avr/io.h>
+#include <avr/interrupt.h>
+// Utility functions for delay.
+#include <util/delay.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "usb_serial.h"
+#include <math.h>
+ 
+int count=0;
+ 
+void print_ch(const char * string)
+{
+char c;
+int i=0;
+while((c=string[i++])!='\0')
+{
+usb_serial_putchar(c);
+}
+}
+ 
+void print_int(const int value)
+{
+char buffer[12]; // MAX_INT size
+ 
+int length = sprintf(buffer,"%d ",value);
+        	
+int i;
+for(i=0;i<length;++i){
+usb_serial_putchar(buffer[i]);
+}
+} 
+void set_timer2(int com_A, int com_B, int wgm, int cs){
+if(com_A)
+DDRB=(1<<4);
+                    	
+if(com_B)
+DDRD=(1<<1);
+                    	
+TCCR2A=(com_A<<6) | (com_B<<4) | (wgm & 3);
+TCCR2B=((wgm & 4)<<3) | cs;
+}
+ 
+ISR(TIMER2_COMPA_vect) // routine handler
+{
+count++;
+if(count==8){
+     		count=0;
+          	if(OCR0B!=0){
+print_ch("Speed: ");
+                	print_int(OCR0B);
+                	print_ch(" Direction: Forward\n");
+          	}
+          	else if(OCR0A!=0){
+                	print_ch("Speed: ");
+               	print_int(OCR0A);
+               	print_ch(" Direction: Backward\n");
+          	}
+          	else if(OCR0A==0 && OCR0B==0){
+                	print_ch("Stop\n");
+          	}       	
+}
+}
+ 
+void serial_read(char* buffer)
+{
+int i=0;
+while(usb_serial_available())
+     {
+buffer[i++]=usb_serial_getchar();
+    	}
+    	buffer[i]='\0';
+}
+ 
+// DC motor to be run with 8 bit PWM
+int main(void)
+{
+usb_init();
+    	DDRB = (1 << 7); // enable pin 6  
+    	DDRD = (1 << 0);
+ 
+    	// Setup timer0 for comparsprinte-mode, fast pwm on OC0A with a pre-scaling of 1/64. (OC0B is disconnected)
+     	TCCR0A = 0b11110001;
+     	TCCR0B = 0b00000001;
+ 
+    	// Set top for timer0, OC0A (duty cycle = 0%)
+     	OCR0A = 0; 
+    	OCR0B = 0;
+ 
+//Setting timer 2 for interrupt
+     	set_timer2(2,0,3,7);
+TIMSK2|=(1<<OCIE2A);
+    	TIFR2 |=(1<<OCF2A);
+     	OCR2A = 0;
+ 
+// direction control	
+     	int directionSelection = 0;
+     
+	sei();
+    	
+while(1)
+     	{
+if(usb_serial_available())
+          	{
+char buffer[5];
+               	serial_read(buffer);
+                                	
+directionSelection = strtol(buffer, NULL, 0);
+               	print_int(directionSelection);     	
+                                	
+            	if (directionSelection > 0) // forward
+                {
+OCR0A =  0;
+                     	OCR0B = 120 + directionSelection;
+                     	print_ch("Speed: ");
+                     	print_int(OCR0B);
+                     	print_ch(" Direction: Forward\n");	
+}
+                	else if (directionSelection < 0) // backward
+               	{
+                     	OCR0A = 120 + abs(directionSelection);
+                   	OCR0B =  0;
+                    	print_ch("Speed: ");
+                    	print_int(OCR0A);
+                    	print_ch(" Direction: Backward\n");
+               	}
+               	else if (directionSelection == 0) // stop
+                	{
+                     	OCR0A = 0;
+                    	OCR0B = 0;
+                     	print_ch("Stop\n");
+                	}
+}
+}
+}
+
+ 
+
+4. References Code Common to Bare Metal Programming
+Code references used in our program to do bare metal programming.
+
+4.1 usb_serial.c
+usb_serial.h: a library which contains the following function defined
+
+usb_init(): “initialize the USB controller.”
+
+usb_serial_available(): waiting for the user to input
+
+usb_serial_getchar(): “receives a character”
+
+usb_serial_putchar(): “transmit a single character.”
+
+4.2 avr/interrupt.h
+avr/interrupt.h: a library which contains the interrupt functions
+
+sei(): “enable interrupt”
+
+4.3 stdio.h
+sprintf(str, format, ...): “composes a string with the same text that would be printed if format was used on printf, but instead of being printed, the content is stored as a C string in the buffer pointed by s.”
+
+4.4 stdlib.h
+strtol(str, endpointer, base): converts a string to an integer if the base (3rd parameter) is set to zero. We chose the endpointer to be NULL.
+
+4.5 math.h
+abs(): converts the parameter which is an integer to be a positive value.
+ 
+
+Discussion/Conclusion
+In this lab we programmed the AVR to control 4 motors based on user input. Due to the small current provided by the microprocessor, we used an alternative DC source of power to supply the motors. In order to allow the AVR to control the second circuit, we used an H-bridge for each pair of motors. For this project, we used timers to generate the corresponding PWM for the motors and interrupts to handle I/O. Therefore most of the computational features of the controller are idle. We were surprised to see how the change of voltage in the PWM will not translate in a smooth transition of speed on the motor. Instead other factors have greater impact on the behavior of the device, such as: parallelism, cpu frequency and prescaling.
