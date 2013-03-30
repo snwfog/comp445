@@ -1,6 +1,6 @@
 Peer host 1: snwb6b6
 Peer host 2: snwb6b6
-Damage Rate: 20
+Damage Rate: 0
 Router: Receive packet 0 from peer host 1
 Router: Send packet 0 received from peer host 1 to host 2
 Router: Receive packet 0 from peer host 2
@@ -8,8 +8,6 @@ Router: Send packet 0 received from peer host 2 to host 1
 Router: Receive packet 1 from peer host 1
 Router: Send packet 1 received from peer host 1 to host 2
 Router: Receive packet 1 from peer host 2
-Router: Packet 1 received from peer host 2 has been dropped by router!
-Router: Receive packet 2 from peer host 2
-Router: Send packet 2 received from peer host 2 to host 1
+Router: Send packet 1 received from peer host 2 to host 1
 Router: Receive packet 2 from peer host 1
 Router: Send packet 2 received from peer host 1 to host 2

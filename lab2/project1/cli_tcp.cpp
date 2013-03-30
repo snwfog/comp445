@@ -221,6 +221,10 @@ int main(void)
         // Length of sockaddr struct
         int len = sizeof(struct sockaddr);
         
+        // * **** * **** * //
+        // REPEAT LOOP
+        // * **** * **** * //
+        while (true) {
         //make sure input from user is get, put or quit or else keep asking
         do
         {
@@ -274,6 +278,7 @@ int main(void)
 
             three_way_hs.client_nb = clientnb;
             three_way_hs.direction = http_action;
+			strcpy(three_way_hs.file_name, filename);
 
             // sending three_way_hs with client number to server
             // sendto(socket to send result, datagram result to send, datagram length, flags: no options, addr, addr lenth);
@@ -335,7 +340,8 @@ int main(void)
             action_delete();
             break;
         }
-    
+
+    } // END OF REPEAT LOOP
     } // END OF TRY LOOP
     catch (char *str) 
     { 
@@ -359,10 +365,16 @@ int main(void)
     return 0;
 }
 
+void action_put(void)
+{
+
+}
+
 void action_delete(void)
 {
     cout << "[DEL]: DELETING SERVER FILE \"" << filename << "\"" << endl;
-    while (true)
+	bool ack = false;
+    while (!ack)
     {
         // Just waiting for the reply, because the TWH contains the delete information
         // that the server should already have received
@@ -390,7 +402,7 @@ void action_delete(void)
                 case 'e':
                     cout << "[DEL]: ERROR, NO FILE FOUND ON SERVER!" << endl;
                     break;
-                case 'f':
+                case 's':
                     cout << "[DEL]: FILE DELETED FROM SERVER!" << endl;
                     break;
                 }
@@ -407,6 +419,8 @@ void action_delete(void)
                 sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, sizeof(sa_in));
 
                 cout << "[DEL]: ACK SEND FOR PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+                cout << "[DEL]: THIS PACKET IS SEND ONCE. FAILED TO RECEIVE BY SERVER WILL CRASH." << endl;
+                ack = true;
             }
             else
             {
@@ -429,11 +443,14 @@ void action_list(void)
 {
     
     cout << "[LST]: LISTING SERVER FOLDER DIRECTORY." << endl;
+	bool ack = false;
+
     do
     {
         // Clear the message frame
         memset(message_frame.data, 0, sizeof(message_frame.data));
-        while (true)
+
+        while (!ack)
         {
             // ACTION LIST					
             FD_ZERO(&readfds);
@@ -446,7 +463,7 @@ void action_list(void)
                 ibytesrecv = recvfrom(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, &len);
 
                 cout << "[LST]: RECEIVED PACKET SEQ (" << message_frame.snwseq
-                     << ") EXPECTING SEQ (" << serverseqnb << ")";
+                     << ") EXPECTING SEQ (" << serverseqnb << ")" << endl;
 
                 if (ibytesrecv == SOCKET_ERROR)
                 {
@@ -468,6 +485,7 @@ void action_list(void)
                     case 'l':
                         // PRINT INFO TO LOG
                         cout << "[LST]: TRANSFER COMPLETE" << endl;
+						ack = true;
                         break;
                     }
 
@@ -482,9 +500,7 @@ void action_list(void)
 
                     sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, sizeof(sa_in));
 
-
-                    cout << "[LST]: ACK SEND FOR PACKET SEQ (" << message_frame.snwseq << ")";
-
+                    cout << "[LST]: ACK SEND FOR PACKET SEQ (" << message_frame.snwseq << ")" << endl;
                 }
                 else // Send ACK for the latest sequence number
                 {
@@ -499,14 +515,8 @@ void action_list(void)
 
                     sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, sizeof(sa_in));
                 }
-
-
-                break;
-
             }
         }
-
-
-    } while (message_frame.header != 'e' && message_frame.header != 'l');
+    } while (!ack);
 }
 

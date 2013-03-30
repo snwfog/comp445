@@ -470,6 +470,7 @@ int main(void)
 
 				filedel.open(three_way_hs.file_name, ios_base::in | ios_base::binary);
 
+				cout << "[DEL]: ASKING TO DELETE FILE " << three_way_hs.file_name << endl;
 				if (!filedel.is_open()) // IF ITS NOT OPEN, THEN FILE DONT EXISTS
 				{
 					cout << "[DEL]: FILE DOES NOT EXISTS ON SERVER!" << endl;
@@ -523,6 +524,59 @@ int main(void)
 						}
 					} // END OF FILE DOES NOT EXISTS WHILE LOOP
 				} // END OF IF FILE DOES NOT EXISTS
+				else // ELSE THE FILE IS PRESENT ON THE SERVER SIDE
+				{
+					cout << "[DEL]: FILE EXISTS ON SERVER!" << endl;
+
+					// Close the file
+					filedel.close();
+					// Remove the file from the OS
+					remove(three_way_hs.file_name);
+
+					while(true)
+					{
+						//send packet to client indicating the file deleted
+						//char s indicates success
+
+						message_frame.header = 's';
+						//send seqnb
+						message_frame.snwseq = serverseqnb;
+						//send success message to client
+						sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, sizeof(sa));
+						//print info to log
+						cout << "[DEL]: SENT SUCCESS PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+						// Timeout 300 ms
+						outfds = select(1, &readfds, NULL, NULL, &timeouts);
+
+						if (outfds)
+						{
+							//receive client ACK 
+							ibytesrecv = recvfrom(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, &len);
+							//print info to log
+							cout << "[DEL]: RECEIVED PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+							//check if seqnb are the same
+							if (ibytesrecv == SOCKET_ERROR)
+							{
+								cerr << "ERROR: Socket connection error for receiving DEL acks";
+							}
+
+							//check if seqnb are the same
+							if ((serverseqnb+1) == message_frame.snwseq
+								&& message_frame.header == 'a')
+							{
+								// This SEQ should be serverseqnb + 1
+								// That is the correct SEQ number that the client is expecting
+								cout << "[DEL]: RECEIVED PACKET IS ACK FOR SEQ (" << message_frame.snwseq << ")" << endl;
+								// Add 1 to seqnb	
+								serverseqnb = serverseqnb + 1;
+								
+								cout << "[DEL]: COMPLETED" << endl;
+
+								break;
+							}
+						}
+					} // END OF IF FILE EXISTS
+				}
 			} // END OF DELETE ACTION
 		} // END OF WAIT LISTENING
 
