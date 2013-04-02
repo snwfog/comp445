@@ -53,7 +53,7 @@ int const MAX_SIZE = 128;
 int const MAX = 260;
 
 //buffer data types
-char szbuffer[128];
+char szbuffer[MAX_SIZE];
 
 char *buffer;
 int ibufferlen;
@@ -578,9 +578,326 @@ int main(void)
 					} // END OF IF FILE EXISTS
 				}
 			} // END OF DELETE ACTION
+
+			/**********************************************************/
+			/* START OF GETTING
+			/**********************************************************/
+			if (three_way_hs.direction == 'g')
+			{
+				//message saying file is being sent
+				cout << "[GET]: SENDING FILE TO" << endl;
+				//open file to be sent
+				ifstream fileout;
+				//open file to convert to binary
+				fileout.open(three_way_hs.file_name, ios_base::in | ios_base::binary);
+				//check if the file exists
+				if (!fileout.is_open())
+				{
+					while(true)
+					{
+						//send packet to client showing that file doesn't exist
+						
+						//char 9 indicates an error
+						message_frame.header = '9';
+						//send seqnb
+						message_frame.snwseq = serverseqnb;
+						// Clear message frame data
+						memset(message_frame.data, 0, sizeof(message_frame.data));
+						//send error message to client
+						sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, sizeof(sa));
+						//print info to log
+						cout << "[GET]: SENT ERROR PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+						// timeout is 300ms
+						outfds = select(1, &readfds, NULL, NULL, &timeouts);
+						// WAITING FOR ACK
+						if (outfds)
+						{
+							// Waiting for the ACK
+							// Receive client ACK to finish three way handshake
+							ibytesrecv = recvfrom(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, &len);
+
+							// Sequence number counter for received ACKS
+							cout << "[GET]: RECEIVED PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+							
+
+							//check for error
+							if (ibytesrecv == SOCKET_ERROR)
+							{
+								cerr << "ERROR: Socket connection error for receiving DEL acks";
+							}
+
+							//check if seqnb are the same
+							if ((serverseqnb+1) == message_frame.snwseq
+								&& message_frame.header == 'a')
+							{
+								cout << "[GET]: FILE DOES NOT EXISTS ON THE SERVER!" << endl;
+								// This SEQ should be serverseqnb + 1
+								// That is the correct SEQ number that the client is expecting
+								cout << "[GET]: RECEIVED PACKET IS ACK FOR SEQ (" << message_frame.snwseq << ")" << endl;
+								// Add 1 to seqnb	
+								serverseqnb = serverseqnb + 1;
+								
+								cout << "[GET]: COMPLETED" << endl;
+
+								break;
+							}
+						}
+					}
+				} // END OF FILE DOES NOT EXISTS
+				// BEGIN OF FILE DOES EXISTS
+				else
+				{
+					//get the file size
+					fileout.seekg(0,ios::end);
+					int filesize = fileout.tellg();
+					fileout.seekg(0, ios::beg);
+					//to keep track of the bits sent
+					int bitsread = 0;
+					//to keep track of the bits left to read
+					int bitsleft = filesize;
+					//flag when the file is completely received
+					bool lastpacket = false;
+					//keep sending packets until there are no more bits to read
+					while (!lastpacket)
+					{
+						// Clear the szbuffer for reading char from file
+						memset(szbuffer, 0, sizeof(szbuffer));
+						//if data is at the beginning of middle of the file
+						cout << "BYTE LEFT: " << bitsleft << endl;
+						cout << "BYTE SENT: " << bitsread << endl;
+
+						if (bitsleft > MAX_SIZE)
+						{
+							
+							// Set a semi permanent storage of the "whats-coming" byte to send
+							// in the szbuffer char array
+							fileout.read(szbuffer, MAX_SIZE);
+							while(true)
+							{
+								// char b indicates this packet is in the middle
+								message_frame.header = 'b';
+								//send seqnb
+								message_frame.snwseq = serverseqnb;
+								// Clear message frame data first and copy the data into the frame's payload
+								memset(message_frame.data, 0, sizeof(message_frame.data));
+								memcpy(message_frame.data, szbuffer, sizeof(message_frame.data));
+
+								// send packet to server
+								sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, sizeof(sa));
+								// print info to log
+								cout << "[GET]: SENT PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+								//timeout is 300 ms
+								outfds = select(1, &readfds, NULL, NULL, &timeouts);
+
+								//if outfds is 1, data has been received
+								if (outfds)
+								{
+
+									// Waiting for the ACK
+									// Receive client ACK to finish three way handshake
+									ibytesrecv = recvfrom(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, &len);
+
+									// Sequence number counter for received ACKS
+									cout << "[GET]: RECEIVED PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+							
+									//check for error
+									if (ibytesrecv == SOCKET_ERROR)
+									{
+										cerr << "ERROR: Socket connection error for receiving DEL acks";
+									}
+
+									//check if seqnb are the same
+									if ((serverseqnb+1) == message_frame.snwseq
+										&& message_frame.header == 'a')
+									{
+										// Increase server sequence number
+										serverseqnb++;
+										// Change bits read and bits left accordingly
+										bitsleft = bitsleft - MAX_SIZE;
+										bitsread = bitsread + MAX_SIZE;
+										break;
+										//else resend packet
+									}
+								}
+							}
+						}
+						//if data is at the end of the file
+						else if (bitsleft <= MAX_SIZE)
+						{
+							
+							memset(szbuffer, 0, sizeof(szbuffer));
+							//read data into the packet until the allocated size is reached
+							fileout.read(szbuffer, bitsleft);
+
+							while (true)
+							{
+								//this packet is the last
+								message_frame.header = (unsigned char)bitsleft;
+								//send seqnb
+								message_frame.snwseq = serverseqnb;
+								//since we will not fill the entire message_frame.data, clear it
+								memset(message_frame.data, 0, sizeof(message_frame.data));
+								memcpy(message_frame.data, szbuffer, bitsleft);
+								//send packet to 
+								sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, sizeof(sa));
+								//print info to log
+								cout << "[GET]: SENT LAST PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+								//timeout is 300 ms
+								outfds = select(1, &readfds, NULL, NULL, &timeouts);
+								//if outfds is 1, data has been received
+								if (outfds)
+								{
+									// Waiting for the ACK
+									// Receive client ACK to finish three way handshake
+									ibytesrecv = recvfrom(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, &len);
+
+									// Sequence number counter for received ACKS
+									cout << "[GET]: RECEIVED PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+							
+									//check for error
+									if (ibytesrecv == SOCKET_ERROR)
+									{
+										cerr << "ERROR: Socket connection error for receiving DEL acks";
+									}
+
+									//check if seqnb are the same
+									if ((serverseqnb+1) == message_frame.snwseq
+										&& message_frame.header == 'a')
+									{
+										// Increase server sequence number
+										serverseqnb++;
+										// Set last packet to true
+										lastpacket = true;
+										break;
+										//else resend packet
+									}
+								}
+							}
+						}
+					}
+				} // END OF FILE DOES EXISTS
+
+				//get file size
+				fileout.seekg(0, ios::end);
+				int filesizeout = fileout.tellg();
+				//close the file
+				fileout.close();
+				//print info to log
+
+				cout << "[GET]: FILE TRANSFER COMPLETE" << endl;
+				cout << "[GET]: RECEIVED " << filesizeout << " BYTE" << endl;
+			} // END OF GET
+
+			/**********************************************************/
+			/* START OF PUTTING
+			/**********************************************************/
+			else if (three_way_hs.direction == 'p')
+			{
+				//message saying file is being received
+				cout << "[PUT]: RECEIVING FILE" << endl;
+				//create file to write to as filein
+				ofstream filein;
+				//open for output in binary mode (overwrite file if it already exists)
+				filein.open(three_way_hs.file_name, ios::out | ios::binary );
+				//bool to flag when the file as been completely received
+				bool lastpacket = false;
+				int threshold = 5;
+				//continue recieving packets of file until none are left i.e. receive packet indicating end of file
+				while(!lastpacket && threshold)
+				{
+					FD_ZERO(&readfds);
+					FD_SET(s, &readfds);
+
+					// timeout is 300ms
+					outfds = select(1, &readfds, NULL, NULL, &timeouts);
+					// if outfds is 1, data has been receieved
+					if (outfds == 1)
+					{
+						//receive file packet
+						ibytesrecv = recvfrom(s, (char *)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, &len);
+                           
+						cout << "[PUT]: RECEIVED PACKET SEQ (" << message_frame.snwseq
+								<< ") EXPECTING SEQ (" << serverseqnb << ")" << endl;
+
+						if (ibytesrecv == SOCKET_ERROR) 
+							cerr << "ERROR: Socket error from [PUT] packet." << endl;
+           
+						if (message_frame.snwseq == serverseqnb)
+						{
+							cout << "[PUT]: IN ORDER PACKET SEQUENCE DETECTED" << endl;
+							switch (message_frame.header)
+							{
+							case 'b': 
+								//write packet to file
+								filein.write(message_frame.data, sizeof(message_frame.data));
+								//flag that this is not the last packet
+								break;
+							default: //end of file
+								//write packet to file
+								filein.write(message_frame.data, (int)message_frame.header);
+								lastpacket = true;
+								//flag that this is the last packet
+								break;
+							}
+
+							// Expecting next sequence packet
+							serverseqnb++;
+
+							// After receiving this packet send a single ACK
+							memset(message_frame.data, 0, sizeof(message_frame.data));
+
+							message_frame.header = 'a'; // PACKET ACK
+							message_frame.snwseq = serverseqnb;
+
+							sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, sizeof(sa_in));
+
+							cout << "[PUT]: ACK SEND FOR PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+                
+							threshold = 5;
+						}
+						else
+						{
+							cout << "[PUT]: OUT OF ORDER PACKET SEQ (" << message_frame.snwseq 
+									<< ") EXPECTING (" << serverseqnb << ")" << endl;
+							cout << "[PUT]: SENDING ACK FOR EXPECTED PACKET SEQ (" << serverseqnb << ")" << endl;
+
+							memset(message_frame.data, 0, sizeof(message_frame.data));
+                    
+							message_frame.header = 'a'; // PACKET ACK
+							message_frame.snwseq = serverseqnb;
+
+							sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, sizeof(sa_in));
+                
+							threshold--;
+						}
+					}
+					else
+					{
+						cout << "[PUT]: SENDING ACK FOR EXPECTED PACKET SEQ (" << serverseqnb << ")" << endl;
+						memset(message_frame.data, 0, sizeof(message_frame.data));
+                    
+						message_frame.header = 'a'; // PACKET ACK
+						message_frame.snwseq = serverseqnb;
+
+						sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, sizeof(sa_in));
+                
+					}
+				}
+
+				//success unless recieved error
+				if (message_frame.header != '9')
+				{
+					//get file size
+					filein.seekp(0, ios::end);
+					int filesizein = filein.tellp();
+					//close the file
+					filein.close();
+					//print info to log
+					cout << "[PUT]: FILE TRANSFER COMPLETE" << endl;
+					cout << "[PUT]: RECEIVED " << filesizein << " BYTE" << endl;
+				}
+			} // END OF PUT
 		} // END OF WAIT LISTENING
-
-
 	}  // END OF TRY
 	catch(char* str) 
 	{ 

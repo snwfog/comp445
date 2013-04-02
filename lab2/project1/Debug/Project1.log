@@ -1,12 +1,15 @@
-﻿Build started 3/29/2013 10:58:15 PM.
+﻿Build started 4/2/2013 6:35:26 PM.
 Project "C:\Users\snw\Documents\GitHub\comp445\lab2\project1\Project1.vcxproj" on node 2 (Build target(s)).
 ClCompile:
   C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt cli_tcp.cpp
   cli_tcp.cpp
-c:\users\snw\documents\github\comp445\lab2\project1\cli_tcp.cpp(146): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\snw\documents\github\comp445\lab2\project1\cli_tcp.cpp(148): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
           c:\program files (x86)\microsoft visual studio 11.0\vc\include\stdio.h(218) : see declaration of 'fopen'
-c:\users\snw\documents\github\comp445\lab2\project1\cli_tcp.cpp(281): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\snw\documents\github\comp445\lab2\project1\cli_tcp.cpp(283): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
           c:\program files (x86)\microsoft visual studio 11.0\vc\include\string.h(110) : see declaration of 'strcpy'
+c:\users\snw\documents\github\comp445\lab2\project1\cli_tcp.cpp(395): warning C4244: 'initializing' : conversion from 'std::streamoff' to 'int', possible loss of data
+c:\users\snw\documents\github\comp445\lab2\project1\cli_tcp.cpp(441): warning C4244: 'initializing' : conversion from 'std::streamoff' to 'int', possible loss of data
+c:\users\snw\documents\github\comp445\lab2\project1\cli_tcp.cpp(558): warning C4244: 'initializing' : conversion from 'std::streamoff' to 'int', possible loss of data
 Link:
   C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\snw\Documents\GitHub\comp445\lab2\Debug\Client.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\snw\Documents\GitHub\comp445\lab2\Debug\Client.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\snw\Documents\GitHub\comp445\lab2\Debug\Client.lib" /MACHINE:X86 Debug\cli_tcp.obj
   Project1.vcxproj -> C:\Users\snw\Documents\GitHub\comp445\lab2\Debug\Client.exe
@@ -14,4 +17,4 @@ Done Building Project "C:\Users\snw\Documents\GitHub\comp445\lab2\project1\Proje
 
 Build succeeded.
 
-Time Elapsed 00:00:01.50
+Time Elapsed 00:00:02.58
