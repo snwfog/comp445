@@ -814,7 +814,7 @@ int main(void)
 					if (outfds == 1)
 					{
 						//receive file packet
-						ibytesrecv = recvfrom(s, (char *)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, &len);
+						ibytesrecv = recvfrom(s, (char *)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, &len);
                            
 						cout << "[PUT]: RECEIVED PACKET SEQ (" << message_frame.snwseq
 								<< ") EXPECTING SEQ (" << serverseqnb << ")" << endl;
@@ -849,7 +849,7 @@ int main(void)
 							message_frame.header = 'a'; // PACKET ACK
 							message_frame.snwseq = serverseqnb;
 
-							sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, sizeof(sa_in));
+							sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, sizeof(sa));
 
 							cout << "[PUT]: ACK SEND FOR PACKET SEQ (" << message_frame.snwseq << ")" << endl;
                 
@@ -866,7 +866,7 @@ int main(void)
 							message_frame.header = 'a'; // PACKET ACK
 							message_frame.snwseq = serverseqnb;
 
-							sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, sizeof(sa_in));
+							sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, sizeof(sa));
                 
 							threshold--;
 						}
@@ -879,8 +879,9 @@ int main(void)
 						message_frame.header = 'a'; // PACKET ACK
 						message_frame.snwseq = serverseqnb;
 
-						sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, sizeof(sa_in));
-                
+						sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, sizeof(sa));
+						
+						threshold--;
 					}
 				}
 
