@@ -407,11 +407,11 @@ void action_put(void)
             memset(szbuffer, 0, sizeof(szbuffer));
             //if data is at the beginning of middle of the file
 
-			if (TRACE)
-			{
-				cout << "BYTE LEFT: " << bitsleft << endl;
-				cout << "BYTE SENT: " << bitsread << endl;
-			}
+            if (TRACE)
+            {
+                cout << "BYTE LEFT: " << bitsleft << endl;
+                cout << "BYTE SENT: " << bitsread << endl;
+            }
 
             if (bitsleft > MAX_SIZE)
             {
@@ -434,9 +434,9 @@ void action_put(void)
                     // send packet to server
                     sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, sizeof(sa_in));
                     // print info to log
-					if (TRACE)
-						cout << "[PUT]: SENT PACKET SEQ (" << message_frame.snwseq << ")" << endl;
-			
+                    if (TRACE)
+                        cout << "[PUT]: SENT PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+            
                     //timeout is 300 ms
                     outfds = select(1, &readfds, NULL, NULL, &timeouts);
 
@@ -449,8 +449,8 @@ void action_put(void)
                         ibytesrecv = recvfrom(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa_in, &len);
 
                         // Sequence number counter for received ACKS
-						if (TRACE)
-							cout << "[PUT]: RECEIVED PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+                        if (TRACE)
+                            cout << "[PUT]: RECEIVED PACKET SEQ (" << message_frame.snwseq << ")" << endl;
                             
                         //check for error
                         if (ibytesrecv == SOCKET_ERROR)
@@ -468,15 +468,15 @@ void action_put(void)
                             bitsleft = bitsleft - MAX_SIZE;
                             bitsread = bitsread + MAX_SIZE;
 
-							if (!TRACE)
-								cout << ".";
+                            if (!TRACE)
+                                cout << ".";
                             break;
                             //else resend packet
                         }
                     }
                 }
             }
-			 //if data is at the end of the file
+             //if data is at the end of the file
             else if (bitsleft <= MAX_SIZE)
             {
                             
@@ -496,8 +496,8 @@ void action_put(void)
                     //send packet to 
                     sendto(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, sizeof(sa));
                     //print info to log
-					if (TRACE)
-						cout << "[PUT]: SENT LAST PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+                    if (TRACE)
+                        cout << "[PUT]: SENT LAST PACKET SEQ (" << message_frame.snwseq << ")" << endl;
                     //timeout is 300 ms
                     outfds = select(1, &readfds, NULL, NULL, &timeouts);
                     //if outfds is 1, data has been received
@@ -508,8 +508,8 @@ void action_put(void)
                         ibytesrecv = recvfrom(s, (char*)&message_frame, sizeof(message_frame), 0, (struct sockaddr*)&sa, &len);
 
                         // Sequence number counter for received ACKS
-						if (TRACE)
-							cout << "[PUT]: RECEIVED PACKET SEQ (" << message_frame.snwseq << ")" << endl;
+                        if (TRACE)
+                            cout << "[PUT]: RECEIVED PACKET SEQ (" << message_frame.snwseq << ")" << endl;
                             
                         //check for error
                         if (ibytesrecv == SOCKET_ERROR)
@@ -526,8 +526,8 @@ void action_put(void)
                             // Set last packet to true
                             lastpacket = true;
 
-							if (!TRACE)
-								cout << "." << endl;
+                            if (!TRACE)
+                                cout << "." << endl;
 
                             break;
                             //else resend packet
